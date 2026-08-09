@@ -9,11 +9,11 @@ import { StatRow } from "@/components/viz";
 
 const STATUSES = ["applied", "replied", "interview", "offer", "rejected"];
 const STATUS_TONE = {
-  applied: "text-ash border-line",
-  replied: "text-goldhi border-gold/60",
+  applied: "text-ash border-line bg-panel",
+  replied: "text-goldhi border-gold/60 bg-panel",
   interview: "text-goldhi border-gold bg-gold/10",
-  offer: "text-[#211D15] !bg-gold border-gold font-bold",
-  rejected: "text-blood border-blood/50",
+  offer: "text-[#211D15] bg-gold border-gold font-bold",
+  rejected: "text-blood border-blood/50 bg-panel",
 };
 const SOURCES = ["LinkedIn", "Naukri", "Referral", "Company site", "Wellfound", "Other"];
 
@@ -132,7 +132,7 @@ export default function PipelinePage() {
                   </p>
                 </div>
                 <select
-                  className={cx("input !min-h-8 !w-auto shrink-0 !rounded-full !border !bg-panel !py-1 !pl-3 !pr-8 !text-[12px] font-semibold capitalize", STATUS_TONE[a.status])}
+                  className={cx("input !min-h-8 !w-auto shrink-0 !rounded-full !border !py-1 !pl-3 !pr-8 !text-[12px] max-md:!text-[16px] font-semibold capitalize", STATUS_TONE[a.status])}
                   value={a.status}
                   onChange={(e) => setStatus(a, e.target.value)}
                   aria-label={`Status of ${a.company}`}
