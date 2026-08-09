@@ -1,0 +1,32 @@
+{
+  "name": "narco-protocol",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "NARCO PROTOCOL — personal discipline operating system. Job-hunt pipeline, habits, iron, fuel, calls, sleep. The empire is built one day at a time.",
+  "scripts": {
+    "dev": "node server.js",
+    "demo": "node server.js --memory",
+    "build": "next build",
+    "start": "node server.js --prod",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^16.5.0",
+    "framer-motion": "^12.15.0",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.525.0",
+    "mongoose": "^8.16.0",
+    "next": "^15.5.0",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.10.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.8",
+    "mongodb-memory-server": "^10.1.4",
+    "tailwindcss": "^4.1.8"
+  }
+}

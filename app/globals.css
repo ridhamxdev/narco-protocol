@@ -1,0 +1,316 @@
+@import "tailwindcss";
+
+/* Clean light theme. Token names kept from the first iteration so components
+   read the same — the VALUES define the new world:
+   void = page bg · panel = card · cream = primary ink · ash = secondary ink */
+@theme inline {
+  --color-void: #f7f5f1;
+  --color-panel: #ffffff;
+  --color-panel2: #f2efe9;
+  --color-well: #f5f2ec;
+  --color-line: #e7e3da;
+  --color-linehi: #d6d0c2;
+  --color-gold: #d9a441; /* amber fill */
+  --color-goldhi: #8a5f1b; /* amber text / strong accent */
+  --color-golddeep: #8a6a2f; /* amber text, subtle */
+  --color-cream: #211d15; /* primary ink */
+  --color-ash: #6e675a; /* secondary ink */
+  --color-faint: #6f6857; /* minor ink */
+  --color-blood: #b3362a; /* danger text */
+  --color-blooddim: #c6453a; /* danger fill */
+  --color-moss: #5f7a4a;
+
+  --font-display: var(--font-archivo), system-ui, sans-serif;
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-archivo), system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  background: var(--color-void);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--color-void);
+  color: var(--color-cream);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  min-height: 100dvh;
+}
+
+::selection {
+  background: #eacb8b;
+  color: #211d15;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-goldhi);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-linehi);
+  border-radius: 6px;
+  border: 2px solid var(--color-void);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@layer components {
+  .card {
+    background: var(--color-panel);
+    border: 1px solid var(--color-line);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 1px 2px rgb(28 25 18 / 0.04);
+  }
+  @media (min-width: 768px) {
+    .card {
+      padding: 20px;
+    }
+  }
+
+  /* kept as a no-op so markup stays stable */
+  .ticked {
+    position: relative;
+  }
+
+  .ledger-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 650;
+    color: #4a4438;
+  }
+
+  .display-num {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mono-data {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── controls ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    min-height: 40px;
+    padding: 0 16px;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+      transform 0.06s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+    user-select: none;
+  }
+  .btn:active {
+    transform: scale(0.98);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+  }
+  /* primary action */
+  .btn-gold {
+    background: #211d15;
+    color: #fbf9f5;
+  }
+  .btn-gold:hover:not(:disabled) {
+    background: #3a342b;
+  }
+  .btn-line {
+    border: 1px solid var(--color-linehi);
+    color: var(--color-cream);
+    background: var(--color-panel);
+  }
+  .btn-line:hover:not(:disabled) {
+    border-color: #a89f8d;
+  }
+  .btn-red {
+    background: var(--color-blooddim);
+    color: #fff6f3;
+  }
+  .btn-red:hover:not(:disabled) {
+    background: var(--color-blood);
+  }
+  .btn-ghost {
+    color: var(--color-ash);
+    background: transparent;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    color: var(--color-cream);
+    background: var(--color-panel2);
+  }
+
+  .input {
+    width: 100%;
+    background: var(--color-well);
+    border: 1px solid var(--color-line);
+    border-radius: 10px;
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: var(--color-cream);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .input::placeholder {
+    color: #756d5c;
+  }
+  /* iOS zooms the viewport on focused inputs under 16px — keep phone inputs at 16 */
+  @media (max-width: 767px) {
+    .input {
+      font-size: 16px;
+    }
+  }
+  .input:hover {
+    border-color: var(--color-linehi);
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--color-gold);
+    box-shadow: 0 0 0 3px rgb(217 164 65 / 0.18);
+    background: var(--color-panel);
+  }
+  .input:disabled {
+    opacity: 0.5;
+  }
+  select.input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236e675a' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 34px;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 550;
+    color: var(--color-ash);
+    margin-bottom: 6px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    border: 1px solid var(--color-line);
+    background: var(--color-panel);
+    color: #4a4438;
+    font-size: 12px;
+    font-weight: 550;
+    padding: 4px 11px;
+    min-height: 28px;
+    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+    cursor: pointer;
+    user-select: none;
+  }
+  .chip:hover {
+    border-color: var(--color-linehi);
+    background: var(--color-well);
+  }
+  .chip[data-on="true"] {
+    background: rgb(217 164 65 / 0.14);
+    border-color: var(--color-gold);
+    color: var(--color-goldhi);
+  }
+  .chip:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* verdict pill — quiet, no rotation */
+  .stamp {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--color-blood);
+    border: 1.5px solid rgb(179 54 42 / 0.5);
+    border-radius: 999px;
+    padding: 3px 10px;
+    background: rgb(179 54 42 / 0.06);
+  }
+  .stamp-gold {
+    color: var(--color-goldhi);
+    border-color: rgb(217 164 65 / 0.7);
+    background: rgb(217 164 65 / 0.1);
+  }
+
+  .skeleton {
+    background: linear-gradient(100deg, #ede9e0 40%, #f6f3ec 50%, #ede9e0 60%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s infinite linear;
+    border-radius: 8px;
+  }
+  @keyframes shimmer {
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  .struck {
+    position: relative;
+    color: var(--color-faint);
+  }
+  .struck::after {
+    content: "";
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    top: 50%;
+    height: 1.5px;
+    background: #c1b998;
+    transform: scaleX(1);
+    transform-origin: left;
+    animation: strike 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes strike {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  .overdue-pulse {
+    animation: overduePulse 2.2s ease-in-out infinite;
+  }
+  @keyframes overduePulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgb(179 54 42 / 0);
+    }
+    50% {
+      box-shadow: 0 0 0 4px rgb(179 54 42 / 0.1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton,
+    .overdue-pulse,
+    .struck::after {
+      animation: none;
+    }
+  }
+}

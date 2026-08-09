@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#0C0A07"/>
+  <!-- corner ticks -->
+  <path d="M12 17 v-5 h5" fill="none" stroke="#D9A441" stroke-width="2.5" stroke-linecap="square"/>
+  <path d="M52 17 v-5 h-5" fill="none" stroke="#D9A441" stroke-width="2.5" stroke-linecap="square"/>
+  <path d="M12 47 v5 h5" fill="none" stroke="#D9A441" stroke-width="2.5" stroke-linecap="square"/>
+  <path d="M52 47 v5 h-5" fill="none" stroke="#D9A441" stroke-width="2.5" stroke-linecap="square"/>
+  <!-- N monogram -->
+  <path d="M20 46 V18 h6.5 L37.5 36.5 V18 H44 v28 h-6.5 L26.5 27.5 V46 Z" fill="#F2CD7E"/>
+</svg>
