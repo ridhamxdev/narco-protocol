@@ -27,9 +27,10 @@ export const POST = open(async (req) => {
   await ensureSettings(user._id, user.email);
   await seedHabitsFor(user._id);
 
+  const token = signToken(user._id);
   return withAuthCookie(
-    { ok: true, user: { id: user._id, name: user.name, email: user.email } },
-    signToken(user._id),
+    { ok: true, token, user: { id: user._id, name: user.name, email: user.email } },
+    token,
     req
   );
 });

@@ -10,9 +10,10 @@ export const POST = open(async (req) => {
   if (!user || !bcrypt.compareSync(password || "", user.passwordHash)) {
     throw new HttpError(401, "Wrong email or password");
   }
+  const token = signToken(user._id);
   return withAuthCookie(
-    { ok: true, user: { id: user._id, name: user.name, email: user.email } },
-    signToken(user._id),
+    { ok: true, token, user: { id: user._id, name: user.name, email: user.email } },
+    token,
     req
   );
 });
