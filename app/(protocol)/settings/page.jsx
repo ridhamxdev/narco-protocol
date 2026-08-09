@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Settings2, UserRound, Scale, ListChecks, Mail, LogOut, Plus, PencilLine,
-  Trash2, Send, BellRing, ShieldCheck, ShieldAlert,
+  Trash2, Send, BellRing, ShieldCheck, ShieldAlert, CalendarDays, Eraser,
 } from "lucide-react";
 import { api, useApi, cx, fmtMin } from "@/lib/client";
 import { useToast } from "@/components/providers";
@@ -36,9 +36,61 @@ export default function ControlPage() {
       <HabitsCard data={data} refresh={refresh} />
       <div className="grid gap-4">
         <MailCard data={data} refresh={refresh} />
+        <SeasonCard data={data} refresh={refresh} />
         <SessionCard data={data} />
       </div>
     </div>
+  );
+}
+
+/* ── season: start date + erase ── */
+function SeasonCard({ data, refresh }) {
+  const { save, busy } = useSaver(refresh);
+  const toast = useToast();
+  const [startDate, setStartDate] = useState(data.settings.startDate || "");
+  const [erasing, setErasing] = useState(false);
+
+  async function erase() {
+    setErasing(true);
+    try {
+      const r = await api("/settings/reset", { method: "POST" });
+      toast(`Erased ${r.removed} log entries — clean slate`);
+      await refresh();
+    } catch (e) {
+      toast(e.message, "err");
+    } finally {
+      setErasing(false);
+    }
+  }
+
+  return (
+    <section className="card" aria-label="Season">
+      <SectionHead icon={CalendarDays} title="The season" />
+      <div className="grid gap-4">
+        <div>
+          <Field label="Day 1 of the protocol">
+            <input className="input" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          </Field>
+          <p className="mt-1.5 text-[11.5px] leading-relaxed text-faint">
+            Days before this don't count toward scores, streaks or the calendar. Leave empty to
+            count from the day you signed up.
+          </p>
+        </div>
+        <button className="btn btn-gold" disabled={busy} onClick={() => save({ settings: { startDate } }, "Season updated")}>
+          Save season
+        </button>
+        <div className="border-t border-line pt-4">
+          <p className="text-[13.5px] font-semibold text-cream">Erase all logged data</p>
+          <p className="mb-3 mt-0.5 text-[11.5px] leading-relaxed text-faint">
+            Deletes every log — applications, habits, food, gym, game, sleep, calls, targets.
+            Your account, habit definitions and settings stay. This cannot be undone.
+          </p>
+          <TwoTap className="btn btn-line w-full !text-blood" confirmText="Tap again to erase everything" onConfirm={erase}>
+            <Eraser className="size-4" /> {erasing ? "Erasing…" : "Erase all data"}
+          </TwoTap>
+        </div>
+      </div>
+    </section>
   );
 }
 

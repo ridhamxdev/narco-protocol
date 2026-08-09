@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { Habit, HabitLog } from "@/lib/db";
 import { api, readJson, HttpError } from "@/lib/auth";
-import { protocolToday } from "@/lib/time";
+import { clampDate } from "@/lib/logic";
 
 export const dynamic = "force-dynamic";
 
 // POST { toggle:true } for check habits, { delta:±n } or { value:n } for counters
+// Optional { date:"YYYY-MM-DD" } to edit a past day
 export const POST = api(async (req, ctx, user, settings) => {
   const { id } = await ctx.params;
   const body = await readJson(req);
@@ -14,7 +15,7 @@ export const POST = api(async (req, ctx, user, settings) => {
   if (!["check", "counter"].includes(habit.kind))
     throw new HttpError(400, "This habit completes automatically from its own tracker");
 
-  const date = protocolToday(settings.tz);
+  const date = clampDate(body.date, user, settings);
   const existing = await HabitLog.findOne({ habitId: habit._id, date });
 
   if (habit.kind === "check") {

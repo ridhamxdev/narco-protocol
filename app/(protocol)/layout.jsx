@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Crosshair, Briefcase, Phone, BookOpen, Settings2, LogOut } from "lucide-react";
+import { Crosshair, CalendarDays, Briefcase, Phone, BookOpen, Settings2, LogOut } from "lucide-react";
 import { api, cx } from "@/lib/client";
 
 const NAV = [
   { href: "/", label: "Today", icon: Crosshair },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/applications", label: "Pipeline", icon: Briefcase },
   { href: "/calls", label: "Calls", icon: Phone },
   { href: "/progress", label: "Progress", icon: BookOpen },

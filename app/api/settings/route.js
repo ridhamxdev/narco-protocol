@@ -35,6 +35,10 @@ export const PUT = api(async (req, ctx, user, settings) => {
     }
   }
   if (b.personName !== undefined) s.personName = String(b.personName).trim().slice(0, 40);
+  if (b.startDate !== undefined) {
+    if (b.startDate === "" || /^\d{4}-\d{2}-\d{2}$/.test(b.startDate)) s.startDate = b.startDate;
+    else throw new HttpError(400, "Start date must be YYYY-MM-DD");
+  }
   if (HHMM.test(b.bedTime || "")) s.bedTime = b.bedTime;
   if (b.gameLimit !== undefined) s.gameLimit = Math.min(600, Math.max(0, Number(b.gameLimit) || 0));
   if (b.appsTarget !== undefined) s.appsTarget = Math.min(50, Math.max(1, Number(b.appsTarget) || 10));

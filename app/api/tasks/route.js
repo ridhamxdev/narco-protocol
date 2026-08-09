@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Task } from "@/lib/db";
 import { api, readJson, HttpError } from "@/lib/auth";
-import { protocolToday } from "@/lib/time";
+import { clampDate } from "@/lib/logic";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,7 @@ export const POST = api(async (req, ctx, user, settings) => {
   const task = await Task.create({
     userId: user._id,
     title: body.title.trim().slice(0, 140),
-    date: /^\d{4}-\d{2}-\d{2}$/.test(body.date || "") ? body.date : protocolToday(settings.tz),
+    date: clampDate(body.date, user, settings),
   });
   return NextResponse.json({ ok: true, task });
 });

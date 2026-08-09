@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { PersonLog } from "@/lib/db";
 import { api, readJson, HttpError } from "@/lib/auth";
-import { protocolToday } from "@/lib/time";
+import { clampDate } from "@/lib/logic";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,7 @@ export const POST = api(async (req, ctx, user, settings) => {
   if (!body.person?.trim()) throw new HttpError(400, "Time with who?");
   const log = await PersonLog.create({
     userId: user._id,
-    date: protocolToday(settings.tz),
+    date: clampDate(body.date, user, settings),
     person: body.person.trim().slice(0, 60),
     minutes: Math.min(720, Math.max(5, Number(body.minutes) || 30)),
   });

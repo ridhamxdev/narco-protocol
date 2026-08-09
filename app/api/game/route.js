@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { GameLog } from "@/lib/db";
 import { api, readJson, HttpError } from "@/lib/auth";
-import { protocolToday } from "@/lib/time";
+import { clampDate } from "@/lib/logic";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,7 @@ export const POST = api(async (req, ctx, user, settings) => {
   if (!minutes) throw new HttpError(400, "How many minutes?");
   const log = await GameLog.create({
     userId: user._id,
-    date: protocolToday(settings.tz),
+    date: clampDate(body.date, user, settings),
     minutes,
     game: (body.game || "").slice(0, 60),
   });

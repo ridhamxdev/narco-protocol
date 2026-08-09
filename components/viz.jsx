@@ -91,7 +91,7 @@ const RAMP = [
   { lt: 100, c: "#A87420" },
   { lt: 101, c: "#7D5A1A" }, // 100 — complete
 ];
-function rampColor(pct) {
+export function rampColor(pct) {
   for (const r of RAMP) if (pct < r.lt) return r.c;
   return RAMP[RAMP.length - 1].c;
 }
@@ -198,6 +198,70 @@ export function DotStrip({ data, onLabel = "on time", offLabel = "late", noneLab
           </span>
         );
       })}
+    </div>
+  );
+}
+
+/* ── Trend line (single series, touch readout, optional reference) ── */
+export function LineArea({
+  data, // [{ label, value }]
+  target,
+  targetLabel,
+  unit = "",
+  height = 130,
+  maxOverride,
+}) {
+  const [sel, setSel] = useState(data.length - 1);
+  const n = data.length;
+  if (n === 0) return <Readout text="No data yet" />;
+  const max = maxOverride ?? Math.max(target || 0, ...data.map((d) => d.value), 1) * 1.1;
+  const W = 100;
+  const H = 100;
+  const x = (i) => (n === 1 ? 50 : (i / (n - 1)) * W);
+  const y = (v) => H - (v / max) * H;
+  const pts = data.map((d, i) => `${x(i)},${y(d.value)}`).join(" ");
+  const cur = data[Math.min(sel, n - 1)];
+
+  function pick(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    setSel(Math.round(frac * (n - 1)));
+  }
+
+  return (
+    <div>
+      <Readout text={cur ? `${cur.label} — ${cur.value}${unit}` : ""} />
+      <div
+        className="relative touch-pan-y"
+        style={{ height }}
+        onPointerMove={pick}
+        onPointerDown={pick}
+        role="img"
+        aria-label={`Trend chart, latest ${data[n - 1].value}${unit}`}
+      >
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+          {target ? (
+            <line x1="0" x2={W} y1={y(target)} y2={y(target)} stroke="var(--color-faint)" strokeWidth="0.7" strokeDasharray="2.5 2.5" vectorEffect="non-scaling-stroke" />
+          ) : null}
+          <polygon points={`0,${H} ${pts} ${W},${H}`} fill="rgb(217 164 65 / 0.14)" />
+          <polyline points={pts} fill="none" stroke="#C98E2E" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+        <span
+          className="pointer-events-none absolute size-[9px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-panel bg-goldhi"
+          style={{ left: `${x(Math.min(sel, n - 1))}%`, top: `${(y(cur.value) / H) * 100}%` }}
+          aria-hidden
+        />
+        {target ? (
+          <span className="mono-data absolute right-0 text-[10px] text-faint" style={{ top: `calc(${(y(target) / H) * 100}% - 14px)` }}>
+            {targetLabel || target}
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-1.5 flex justify-between">
+        <span className="mono-data text-[10px] text-faint">{data[0]?.label}</span>
+        <span className="mono-data text-[10px] text-faint">{data[n - 1]?.label}</span>
+      </div>
     </div>
   );
 }
