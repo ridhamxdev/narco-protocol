@@ -7,13 +7,56 @@ import { useEffect, useRef, useState } from "react";
 import {
   Briefcase, ListChecks, Utensils, Dumbbell, Gamepad2, MoonStar, Heart, Plus,
   Trash2, Wheat, CircleCheck, Circle, ChevronRight, ChevronDown, HandHeart, X, Pencil,
+  Clock, Cigarette, CigaretteOff, Minus,
 } from "lucide-react";
-import { api, cx, fmtMin } from "@/lib/client";
+import { api, cx, fmtMin, rangeMin } from "@/lib/client";
 import { useToast } from "@/components/providers";
 import { SectionHead, VaultRow, NumberTicker, TickBox, Stepper, TwoTap, EmptyState } from "@/components/ui";
 
 const withDate = (body, date) => (date ? { ...body, date } : body);
 const qsDate = (date) => (date ? `&date=${date}` : "");
+
+/* ══ Optional "from → to" time range ══ */
+export function TimeRange({ start, end, onChange, disabled }) {
+  const dur = rangeMin(start, end);
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <Clock className="size-3.5 shrink-0 text-golddeep" aria-hidden />
+      <input
+        className="input !min-h-8 !w-[104px] !px-2.5 text-center"
+        type="time"
+        value={start || ""}
+        onChange={(e) => onChange({ start: e.target.value, end })}
+        disabled={disabled}
+        aria-label="Start time"
+      />
+      <span className="text-[12px] text-faint" aria-hidden>→</span>
+      <input
+        className="input !min-h-8 !w-[104px] !px-2.5 text-center"
+        type="time"
+        value={end || ""}
+        onChange={(e) => onChange({ start, end: e.target.value })}
+        disabled={disabled}
+        aria-label="End time"
+      />
+      {dur != null && dur > 0 && (
+        <span className="mono-data text-[11.5px] font-medium text-goldhi">{fmtMin(dur)}</span>
+      )}
+    </div>
+  );
+}
+
+// Static "18:00 → 19:00 · 1h" for a locked/immutable range.
+export function TimeRangeTag({ start, end, className }) {
+  if (!start || !end) return null;
+  const dur = rangeMin(start, end);
+  return (
+    <span className={cx("mono-data inline-flex items-center gap-1 text-[11.5px] text-ash", className)}>
+      <Clock className="size-3 text-golddeep" aria-hidden />
+      {start} → {end}{dur != null ? ` · ${fmtMin(dur)}` : ""}
+    </span>
+  );
+}
 
 export const KIND_ICON = {
   apps: Briefcase, gym: Dumbbell, oats: Wheat, clean: Utensils, game: Gamepad2,
@@ -275,18 +318,25 @@ export function GymEditor({ log, date, refresh }) {
   const [open, setOpen] = useState(!log);
   const [type, setType] = useState(log?.type || "full");
   const [minutes, setMinutes] = useState(log?.minutes ?? 60);
+  const [range, setRange] = useState({ start: "", end: "" });
   const [busy, setBusy] = useState(false);
+
+  const locked = Boolean(log?.start && log?.end); // a saved range can't be edited
+  const rangeMinutes = rangeMin(range.start, range.end);
+  const usingRange = Boolean(range.start && range.end);
 
   useEffect(() => {
     if (log) { setType(log.type); setMinutes(log.minutes); setOpen(false); }
     else setOpen(true);
-  }, [log?.type, log?.minutes, date]);
+    setRange({ start: "", end: "" });
+  }, [log?.type, log?.minutes, log?.start, log?.end, date]);
 
   async function save() {
     setBusy(true);
     try {
-      await api("/gym", { method: "POST", body: withDate({ type, minutes }, date) });
-      toast(type === "rest" ? "Recovery logged" : `Iron paid — ${type}, ${fmtMin(minutes)}`);
+      const body = { type, minutes, ...(usingRange ? { start: range.start, end: range.end } : {}) };
+      await api("/gym", { method: "POST", body: withDate(body, date) });
+      toast(type === "rest" ? "Recovery logged" : `Iron paid — ${type}, ${fmtMin(usingRange ? rangeMinutes : minutes)}`);
       await refresh();
     } catch (e) { toast(e.message, "err"); } finally { setBusy(false); }
   }
@@ -302,10 +352,13 @@ export function GymEditor({ log, date, refresh }) {
   if (log && !open)
     return (
       <div className="flex items-center justify-between gap-3 rounded-xl border border-gold/50 bg-gold/[0.05] px-3.5 py-2.5">
-        <p className="text-[13px] font-medium capitalize text-cream">
-          {log.type} · {fmtMin(log.minutes)}
-        </p>
-        <div className="flex gap-1">
+        <div className="min-w-0">
+          <p className="text-[13px] font-medium capitalize text-cream">
+            {log.type} · {fmtMin(log.minutes)}
+          </p>
+          {locked && <TimeRangeTag start={log.start} end={log.end} className="mt-0.5" />}
+        </div>
+        <div className="flex shrink-0 gap-1">
           <button className="btn btn-ghost !min-h-8 !w-8 !p-0" onClick={() => setOpen(true)} aria-label="Edit session">
             <Pencil className="size-3.5" />
           </button>
@@ -325,12 +378,25 @@ export function GymEditor({ log, date, refresh }) {
           </button>
         ))}
       </div>
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <Stepper value={minutes} unit="min" onDelta={(d) => setMinutes((m) => Math.max(0, m + d * 15))} />
-        <button className="btn btn-gold flex-1" onClick={save} disabled={busy}>
-          {log ? "Update session" : "Log session"}
-        </button>
-      </div>
+      {locked ? (
+        <p className="mt-3 flex items-center gap-2 text-[12px] text-ash">
+          <TimeRangeTag start={log.start} end={log.end} />
+          <span className="text-faint">· locked</span>
+        </p>
+      ) : (
+        <>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <Stepper value={usingRange ? rangeMinutes : minutes} unit="min" disabled={usingRange} onDelta={(d) => setMinutes((m) => Math.max(0, m + d * 15))} />
+            <span className="text-[11.5px] text-faint">or log a time window ↓</span>
+          </div>
+          <div className="mt-2">
+            <TimeRange start={range.start} end={range.end} onChange={setRange} />
+          </div>
+        </>
+      )}
+      <button className="btn btn-gold mt-3 w-full" onClick={save} disabled={busy || (usingRange && !(rangeMinutes > 0))}>
+        {log ? "Update session" : "Log session"}
+      </button>
     </div>
   );
 }
@@ -339,15 +405,17 @@ export function GymEditor({ log, date, refresh }) {
 export function GameEditor({ game, date, refresh }) {
   const toast = useToast();
   const [custom, setCustom] = useState("");
+  const [range, setRange] = useState({ start: "", end: "" });
   const { minutes, limit, entries } = game;
   const over = minutes > limit;
   const slots = Math.max(4, Math.ceil(limit / 15));
   const filled = Math.ceil(Math.min(minutes, limit) / 15);
+  const rangeMinutes = rangeMin(range.start, range.end);
 
-  async function add(min) {
+  async function add(body, label) {
     try {
-      await api("/game", { method: "POST", body: withDate({ minutes: min }, date) });
-      toast(`${fmtMin(min)} of play logged`);
+      await api("/game", { method: "POST", body: withDate(body, date) });
+      toast(`${label} of play logged`);
       await refresh();
     } catch (e) { toast(e.message, "err"); }
   }
@@ -358,12 +426,23 @@ export function GameEditor({ game, date, refresh }) {
       {over && <p className="mt-2 text-[12px] font-medium text-blood">{fmtMin(minutes - limit)} past the limit.</p>}
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {[15, 30, 60].map((m) => (
-          <button key={m} type="button" className="chip" onClick={() => add(m)}>+{fmtMin(m)}</button>
+          <button key={m} type="button" className="chip" onClick={() => add({ minutes: m }, fmtMin(m))}>+{fmtMin(m)}</button>
         ))}
-        <form className="flex items-center gap-1.5" onSubmit={(e) => { e.preventDefault(); const v = Number(custom); if (v > 0) { add(v); setCustom(""); } }}>
+        <form className="flex items-center gap-1.5" onSubmit={(e) => { e.preventDefault(); const v = Number(custom); if (v > 0) { add({ minutes: v }, fmtMin(v)); setCustom(""); } }}>
           <input className="input !min-h-8 !w-20 !rounded-full !px-3" placeholder="min" inputMode="numeric" value={custom} onChange={(e) => setCustom(e.target.value.replace(/\D/g, ""))} aria-label="Custom minutes" />
           <button className="chip !min-h-8" disabled={!custom}>add</button>
         </form>
+      </div>
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        <TimeRange start={range.start} end={range.end} onChange={setRange} />
+        <button
+          type="button"
+          className="chip !min-h-8"
+          disabled={!(rangeMinutes > 0)}
+          onClick={() => { add({ start: range.start, end: range.end }, fmtMin(rangeMinutes)); setRange({ start: "", end: "" }); }}
+        >
+          add window
+        </button>
       </div>
       {entries.length > 0 && (
         <ul className="mt-3 flex flex-wrap gap-1.5">
@@ -372,7 +451,7 @@ export function GameEditor({ game, date, refresh }) {
               <TwoTap className="chip !min-h-8" confirmText="Remove?" onConfirm={async () => {
                 try { await api(`/game?id=${g._id}`, { method: "DELETE" }); await refresh(); } catch (e) { toast(e.message, "err"); }
               }}>
-                {fmtMin(g.minutes)} <X className="size-3" aria-hidden />
+                {g.start && g.end ? `${g.start}–${g.end} · ${fmtMin(g.minutes)}` : fmtMin(g.minutes)} <X className="size-3" aria-hidden />
               </TwoTap>
             </li>
           ))}
@@ -481,15 +560,21 @@ export function PeopleEditor({ entries, defaultPerson, date, refresh }) {
 export function TargetsEditor({ tasks, date, refresh, emptyHint = "DSA sheet, portfolio fix, follow-up mail — write it, then hunt it." }) {
   const toast = useToast();
   const [title, setTitle] = useState("");
+  const [range, setRange] = useState({ start: "", end: "" });
+  const [showTime, setShowTime] = useState(false);
   const [busy, setBusy] = useState(false);
+  const rangeMinutes = rangeMin(range.start, range.end);
+  const usingRange = Boolean(range.start && range.end);
 
   async function add(e) {
     e.preventDefault();
     if (!title.trim()) return;
     setBusy(true);
     try {
-      await api("/tasks", { method: "POST", body: withDate({ title }, date) });
+      await api("/tasks", { method: "POST", body: withDate({ title, ...(usingRange ? { start: range.start, end: range.end } : {}) }, date) });
       setTitle("");
+      setRange({ start: "", end: "" });
+      setShowTime(false);
       await refresh();
     } catch (e2) { toast(e2.message, "err"); } finally { setBusy(false); }
   }
@@ -506,7 +591,10 @@ export function TargetsEditor({ tasks, date, refresh, emptyHint = "DSA sheet, po
                 try { await api(`/tasks/${t._id}`, { method: "PATCH", body: { done: !t.done } }); await refresh(); }
                 catch (e) { toast(e.message, "err"); }
               }} />
-              <span className={cx("flex-1 text-[14px]", t.done ? "struck" : "text-cream")}>{t.title}</span>
+              <div className="min-w-0 flex-1">
+                <span className={cx("block truncate text-[14px]", t.done ? "struck" : "text-cream")}>{t.title}</span>
+                {t.start && t.end && <TimeRangeTag start={t.start} end={t.end} className="mt-0.5" />}
+              </div>
               <TwoTap className="btn btn-ghost !min-h-8 !w-8 !p-0 opacity-60 group-hover:opacity-100" onConfirm={async () => {
                 try { await api(`/tasks/${t._id}`, { method: "DELETE" }); await refresh(); }
                 catch (e) { toast(e.message, "err"); }
@@ -517,12 +605,72 @@ export function TargetsEditor({ tasks, date, refresh, emptyHint = "DSA sheet, po
           ))}
         </ul>
       )}
-      <form onSubmit={add} className="mt-3 flex gap-2">
-        <input className="input" placeholder="Add a target" value={title} onChange={(e) => setTitle(e.target.value)} aria-label="New target" />
-        <button className="btn btn-line shrink-0" disabled={busy || !title.trim()} aria-label="Add target">
-          <Plus className="size-4" />
-        </button>
+      <form onSubmit={add} className="mt-3 flex flex-col gap-2">
+        <div className="flex gap-2">
+          <input className="input" placeholder="Add a target" value={title} onChange={(e) => setTitle(e.target.value)} aria-label="New target" />
+          <button
+            type="button"
+            className={cx("btn btn-ghost shrink-0 !w-10 !p-0", (showTime || usingRange) && "!text-goldhi")}
+            onClick={() => setShowTime((v) => !v)}
+            aria-label="Add a time window"
+            aria-pressed={showTime || usingRange}
+          >
+            <Clock className="size-4" />
+          </button>
+          <button className="btn btn-line shrink-0" disabled={busy || !title.trim()} aria-label="Add target">
+            <Plus className="size-4" />
+          </button>
+        </div>
+        {(showTime || usingRange) && (
+          <div className="flex items-center gap-2">
+            <TimeRange start={range.start} end={range.end} onChange={setRange} />
+            <span className="text-[11px] text-faint">worked from → to (optional, locked once saved)</span>
+          </div>
+        )}
       </form>
+    </div>
+  );
+}
+
+/* ══ Quit-smoking counter ══ */
+export function SmokingEditor({ count = 0, date, refresh, goal = 0 }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const clean = count === 0;
+
+  async function bump(delta) {
+    setBusy(true);
+    try {
+      const r = await api("/smoke", { method: "POST", body: withDate({ delta }, date) });
+      if (delta > 0) toast(r.count === 1 ? "1 logged — reset the clock" : `${r.count} today`, "err");
+      else toast(r.count === 0 ? "Back to zero — hold it" : `${r.count} today`);
+      await refresh();
+    } catch (e) { toast(e.message, "err"); } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <span className={cx("grid size-11 shrink-0 place-items-center rounded-xl border", clean ? "border-gold/50 bg-gold/[0.07] text-goldhi" : "border-blood/40 bg-blood/[0.07] text-blood")} aria-hidden>
+          {clean ? <CigaretteOff className="size-5" /> : <Cigarette className="size-5" />}
+        </span>
+        <div>
+          <p className="display-num text-[26px] leading-none text-cream">
+            {count}<span className="text-[0.5em] font-semibold text-ash"> today</span>
+          </p>
+          <p className={cx("mt-1 text-[11.5px] font-medium", clean ? "text-goldhi" : "text-ash")}>
+            {clean ? "Smoke-free — keep the streak" : goal > 0 ? `goal ≤ ${goal}/day` : "every one resets the clock"}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <button type="button" className="btn btn-line !min-h-9 !w-9 !p-0" onClick={() => bump(-1)} disabled={busy || count <= 0} aria-label="One fewer">
+          <Minus className="size-4" />
+        </button>
+        <button type="button" className="btn btn-line !min-h-9 !px-3.5 !text-blood" onClick={() => bump(1)} disabled={busy} aria-label="Log a cigarette">
+          <Plus className="size-4" /> Smoked
+        </button>
+      </div>
     </div>
   );
 }

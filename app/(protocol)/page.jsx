@@ -4,14 +4,14 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Crosshair, Briefcase, Phone, PhoneMissed, PhoneCall, ListChecks, Utensils,
-  Dumbbell, Gamepad2, MoonStar, Heart, Plus, Flame,
+  Dumbbell, Gamepad2, MoonStar, Heart, Plus, Flame, Cigarette,
 } from "lucide-react";
 import { api, useApi, cx, fmtMin, fmtDay } from "@/lib/client";
 import { useToast } from "@/components/providers";
 import { SectionHead, VaultRow, NumberTicker, EmptyState, CardSkeleton } from "@/components/ui";
 import {
   ChecklistEditor, AppsQuickAdd, MealEditor, GymEditor, GameEditor, SleepEditor,
-  PeopleEditor, TargetsEditor,
+  PeopleEditor, TargetsEditor, SmokingEditor,
 } from "@/components/editors";
 
 const MEALS = ["breakfast", "lunch", "snacks", "dinner"];
@@ -64,6 +64,12 @@ export default function TodayPage() {
           <SectionHead icon={Heart} title="Quality time" aside={data.person.entries.length ? `${fmtMin(data.person.entries.reduce((s, p) => s + p.minutes, 0))} today` : null} />
           <PeopleEditor entries={data.person.entries} defaultPerson={data.person.default} refresh={refresh} />
         </section>
+        {data.smoking?.track && (
+          <section id="smoke" className="card scroll-mt-4" aria-label="Quit smoking">
+            <SectionHead icon={Cigarette} title="Quit smoking" aside={data.smoking.count === 0 ? <span className="font-semibold text-goldhi">clean</span> : `${data.smoking.count} today`} />
+            <SmokingEditor count={data.smoking.count} refresh={refresh} />
+          </section>
+        )}
       </div>
 
       <div className="grid gap-4">

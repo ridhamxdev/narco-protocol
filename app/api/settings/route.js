@@ -42,6 +42,7 @@ export const PUT = api(async (req, ctx, user, settings) => {
   if (HHMM.test(b.bedTime || "")) s.bedTime = b.bedTime;
   if (b.gameLimit !== undefined) s.gameLimit = Math.min(600, Math.max(0, Number(b.gameLimit) || 0));
   if (b.appsTarget !== undefined) s.appsTarget = Math.min(50, Math.max(1, Number(b.appsTarget) || 10));
+  if (typeof b.trackSmoking === "boolean") s.trackSmoking = b.trackSmoking;
   if (typeof b.emailEnabled === "boolean") s.emailEnabled = b.emailEnabled;
   if (b.remindEmail !== undefined) s.remindEmail = String(b.remindEmail).trim().slice(0, 120);
   if (HHMM.test(b.morningTime || "")) s.morningTime = b.morningTime;

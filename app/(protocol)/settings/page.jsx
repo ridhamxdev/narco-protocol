@@ -148,6 +148,7 @@ function RulesCard({ data, refresh }) {
   const [game, setGame] = useState(s.gameLimit);
   const [bed, setBed] = useState(s.bedTime);
   const [tz, setTz] = useState(s.tz);
+  const [smoke, setSmoke] = useState(s.trackSmoking !== false);
   const tzList = useMemo(() => (TZS.includes(tz) ? TZS : [tz, ...TZS]), [tz]);
 
   return (
@@ -180,10 +181,19 @@ function RulesCard({ data, refresh }) {
             {tzList.map((z) => <option key={z}>{z}</option>)}
           </select>
         </Field>
+        <div className="flex items-center justify-between gap-3 border-t border-line pt-4">
+          <div>
+            <p className="text-[13.5px] font-semibold text-cream">Quit-smoking tracker</p>
+            <p className="max-w-[34ch] text-[11.5px] leading-relaxed text-faint">
+              Turn off to hide the cigarette counter and all its data from Today, the calendar and reports.
+            </p>
+          </div>
+          <Toggle on={smoke} onChange={() => setSmoke((v) => !v)} label="Quit-smoking tracker" />
+        </div>
         <button
           className="btn btn-gold"
           disabled={busy}
-          onClick={() => save({ settings: { appsTarget: apps, gameLimit: game, bedTime: bed, tz } }, "Rules updated")}
+          onClick={() => save({ settings: { appsTarget: apps, gameLimit: game, bedTime: bed, tz, trackSmoking: smoke } }, "Rules updated")}
         >
           Save rules
         </button>

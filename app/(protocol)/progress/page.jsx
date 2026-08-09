@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
-  BookOpen, Flame, Briefcase, Dumbbell, Utensils, Gamepad2, MoonStar, TrendingUp, Download, Table2,
+  BookOpen, Flame, Briefcase, Dumbbell, Utensils, Gamepad2, MoonStar, TrendingUp, Download, Table2, Cigarette,
 } from "lucide-react";
 import { useApi, cx, fmtMin, fmtDay } from "@/lib/client";
 import { SectionHead, CardSkeleton } from "@/components/ui";
@@ -58,8 +58,12 @@ export default function ProgressPage() {
   const cleanDays = days.filter((d) => d.clean !== -1);
   const cleanPct = cleanDays.length ? Math.round((100 * cleanDays.filter((d) => d.clean === 1).length) / cleanDays.length) : null;
 
+  const smoking = data.smoking;
+  const trackSmoking = smoking?.track;
+
   function downloadCsv() {
     const cols = ["date", "pct", "done", "total", "apps", "gymType", "gymMin", "gameMin", "sleepTime", "sleep", "clean", "meals", "kcal", "protein", "carbs", "fat", "tasksDone", "tasksTotal"];
+    if (trackSmoking) cols.push("cigs");
     const rows = [cols.join(","), ...days.map((d) => cols.map((c) => `"${String(d[c] ?? "")}"`).join(","))];
     const blob = new Blob([rows.join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
@@ -160,6 +164,30 @@ export default function ProgressPage() {
         <p className="mono-data mt-2 text-[11.5px] text-faint">red bar = over the limit</p>
       </section>
 
+      {/* quit smoking */}
+      {trackSmoking && (
+        <section className="card">
+          <SectionHead
+            icon={Cigarette}
+            title="Cigarettes per day"
+            aside={<span>{smoking.smokeFreeDays} smoke-free · streak <span className="font-bold text-goldhi">{smoking.cleanStreak}</span></span>}
+          />
+          <LineArea data={days.map((d) => ({ label: shortDay(d.date), value: d.cigs || 0 }))} unit=" cigs" />
+          <div className="mt-4">
+            <StatRow
+              stats={[
+                { label: "This week", value: smoking.thisWeek },
+                { label: "Avg / smoking day", value: smoking.perDay },
+                { label: "Worst day", value: smoking.worstDay },
+                { label: "Smoke-free", value: smoking.smokeFreeDays },
+                { label: "Total", value: smoking.total },
+              ]}
+            />
+          </div>
+          <p className="mono-data mt-3 text-[11.5px] text-faint">the line trending down is the whole game</p>
+        </section>
+      )}
+
       {/* sleep + clean */}
       <section className="card">
         <SectionHead icon={MoonStar} title="Sleep · on time" aside={onTimePct != null ? `${onTimePct}% on time` : null} />
@@ -195,7 +223,7 @@ export default function ProgressPage() {
           <table className="w-full min-w-[760px] border-collapse text-[12.5px]">
             <thead>
               <tr className="text-left text-[11px] text-ash">
-                {["Date", "Score", "Apps", "Gym", "Game", "Sleep", "Clean", "Kcal", "Protein", "Carbs", "Fat", "Targets"].map((h) => (
+                {["Date", "Score", "Apps", "Gym", "Game", "Sleep", "Clean", "Kcal", "Protein", "Carbs", "Fat", "Targets", ...(trackSmoking ? ["Cigs"] : [])].map((h) => (
                   <th key={h} className="border-b border-line py-2 pr-3 font-semibold">{h}</th>
                 ))}
               </tr>
@@ -218,7 +246,12 @@ export default function ProgressPage() {
                   <td className="border-b border-line/60 py-1.5 pr-3">{d.protein ? d.protein + "g" : "—"}</td>
                   <td className="border-b border-line/60 py-1.5 pr-3">{d.carbs ? d.carbs + "g" : "—"}</td>
                   <td className="border-b border-line/60 py-1.5 pr-3">{d.fat ? d.fat + "g" : "—"}</td>
-                  <td className="border-b border-line/60 py-1.5">{d.tasksTotal ? `${d.tasksDone}/${d.tasksTotal}` : "—"}</td>
+                  <td className="border-b border-line/60 py-1.5 pr-3">{d.tasksTotal ? `${d.tasksDone}/${d.tasksTotal}` : "—"}</td>
+                  {trackSmoking && (
+                    <td className={cx("border-b border-line/60 py-1.5", d.cigs > 0 && "font-semibold text-blood", d.cigs === 0 && "text-goldhi")}>
+                      {d.cigs == null ? "—" : d.cigs}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
